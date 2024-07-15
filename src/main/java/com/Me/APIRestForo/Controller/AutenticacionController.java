@@ -1,6 +1,9 @@
 package com.Me.APIRestForo.Controller;
 
 import com.Me.APIRestForo.Domain.Usuarios.DatosAutenticacionUsuario;
+import com.Me.APIRestForo.Domain.Usuarios.Usuario;
+import com.Me.APIRestForo.Infra.Security.DatosJWTToken;
+import com.Me.APIRestForo.Infra.Security.TokenService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -18,16 +21,22 @@ public class AutenticacionController {
 
     @Autowired
     private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private TokenService tokenService;
     
     @PostMapping
     public ResponseEntity autenticacion(@RequestBody @Valid DatosAutenticacionUsuario datosAutenticacionUsuario){
-        Authentication token = new UsernamePasswordAuthenticationToken(
+
+        Authentication authenticationToken = new UsernamePasswordAuthenticationToken(
                 datosAutenticacionUsuario.login(),
                 datosAutenticacionUsuario.clave()
         );
 
-        authenticationManager.authenticate(token);
+        var usuarioAutenticado = authenticationManager.authenticate(authenticationToken);
 
-        return ResponseEntity.ok().build();
+        var JWTtoken = tokenService.generarToken((Usuario) usuarioAutenticado.getPrincipal());
+
+        return ResponseEntity.ok(new DatosJWTToken(JWTtoken));
     }
 }
